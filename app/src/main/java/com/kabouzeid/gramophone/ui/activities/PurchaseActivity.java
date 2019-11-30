@@ -3,9 +3,9 @@ package com.kabouzeid.gramophone.ui.activities;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Button;
@@ -81,14 +81,14 @@ public class PurchaseActivity extends AbsBaseActivity implements BillingProcesso
     @Override
     public void onProductPurchased(@NonNull String productId, @Nullable TransactionDetails details) {
         Toast.makeText(this, R.string.thank_you, Toast.LENGTH_SHORT).show();
-        setResult(RESULT_OK);
+        App.notifyProVersionChanged();
     }
 
     @Override
     public void onPurchaseHistoryRestored() {
         if (App.isProVersion()) {
             Toast.makeText(this, R.string.restored_previous_purchase_please_restart, Toast.LENGTH_LONG).show();
-            setResult(RESULT_OK);
+            App.notifyProVersionChanged();
         } else {
             Toast.makeText(this, R.string.no_purchase_found, Toast.LENGTH_SHORT).show();
         }

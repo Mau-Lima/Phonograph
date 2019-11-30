@@ -9,14 +9,14 @@ import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.ColorInt;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.CardView;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -418,9 +418,19 @@ public class CardPlayerFragment extends AbsPlayerFragment implements PlayerAlbum
     public void onPanelSlide(View view, float slide) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             float density = getResources().getDisplayMetrics().density;
-            playingQueueCard.setCardElevation((6 * slide + 2) * density);
-            playbackControlsFragment.playPauseFab.setElevation((2 * Math.max(0, (1 - (slide * 16))) + 2) * density);
+
+            float cardElevation = (6 * slide + 2) * density;
+            if (!isValidElevation(cardElevation)) return; // we have received some crash reports in setCardElevation()
+            playingQueueCard.setCardElevation(cardElevation);
+
+            float buttonElevation = (2 * Math.max(0, (1 - (slide * 16))) + 2) * density;
+            if (!isValidElevation(buttonElevation)) return;
+            playbackControlsFragment.playPauseFab.setElevation(buttonElevation);
         }
+    }
+
+    private boolean isValidElevation(float elevation) {
+        return elevation >= -Float.MAX_VALUE && elevation <= Float.MAX_VALUE;
     }
 
     @Override

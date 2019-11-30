@@ -8,9 +8,9 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.media.app.NotificationCompat.MediaStyle;
-import android.support.v7.graphics.Palette;
+import androidx.core.app.NotificationCompat;
+import androidx.media.app.NotificationCompat.MediaStyle;
+import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.animation.GlideAnimation;
@@ -37,7 +37,6 @@ public class PlayingNotificationImpl24 extends PlayingNotification {
         final Song song = service.getCurrentSong();
 
         final boolean isPlaying = service.isPlaying();
-        final String text = MusicUtil.getSongInfoString(song);
 
         final int playButtonResId = isPlaying
                 ? R.drawable.ic_pause_white_24dp : R.drawable.ic_play_arrow_white_24dp;
@@ -81,11 +80,12 @@ public class PlayingNotificationImpl24 extends PlayingNotification {
                                 retrievePlaybackAction(ACTION_SKIP));
                         NotificationCompat.Builder builder = new NotificationCompat.Builder(service, NOTIFICATION_CHANNEL_ID)
                                 .setSmallIcon(R.drawable.ic_notification)
+                                .setSubText(song.albumName)
                                 .setLargeIcon(bitmap)
                                 .setContentIntent(clickIntent)
                                 .setDeleteIntent(deleteIntent)
                                 .setContentTitle(song.title)
-                                .setContentText(text)
+                                .setContentText(song.artistName)
                                 .setOngoing(isPlaying)
                                 .setShowWhen(false)
                                 .addAction(previousAction)

@@ -9,11 +9,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.NavigationView;
-import android.support.v4.app.Fragment;
-import android.support.v4.widget.DrawerLayout;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import com.google.android.material.navigation.NavigationView;
+import androidx.fragment.app.Fragment;
+import androidx.drawerlayout.widget.DrawerLayout;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -49,6 +49,7 @@ import com.kabouzeid.gramophone.util.PreferenceUtil;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -57,7 +58,6 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
 
     public static final String TAG = MainActivity.class.getSimpleName();
     public static final int APP_INTRO_REQUEST = 100;
-    public static final int PURCHASE_REQUEST = 101;
 
     private static final int LIBRARY = 0;
     private static final int FOLDERS = 1;
@@ -96,12 +96,26 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
         if (!checkShowIntro()) {
             showChangelog();
         }
+
+        App.setOnProVersionChangedListener(() -> {
+            // called if the cached value was outdated (should be a rare event)
+            checkSetUpPro();
+            if (!App.isProVersion() && PreferenceUtil.getInstance(MainActivity.this).getLastMusicChooser() == FOLDERS) {
+                setMusicChooser(FOLDERS); // shows the purchase activity and switches to LIBRARY
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        App.setOnProVersionChangedListener(null);
     }
 
     private void setMusicChooser(int key) {
         if (!App.isProVersion() && key == FOLDERS) {
             Toast.makeText(this, R.string.folder_view_is_a_pro_feature, Toast.LENGTH_LONG).show();
-            startActivityForResult(new Intent(this, PurchaseActivity.class), PURCHASE_REQUEST);
+            startActivity(new Intent(this, PurchaseActivity.class));
             key = LIBRARY;
         }
 
@@ -134,11 +148,6 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
             blockRequestPermissions = false;
             if (!hasPermissions()) {
                 requestPermissions();
-            }
-            checkSetUpPro(); // good chance that pro version check was delayed on first start
-        } else if (requestCode == PURCHASE_REQUEST) {
-            if (resultCode == RESULT_OK) {
-                checkSetUpPro();
             }
         }
     }
@@ -173,7 +182,7 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
                     new Handler().postDelayed(() -> setMusicChooser(FOLDERS), 200);
                     break;
                 case R.id.buy_pro:
-                    new Handler().postDelayed(() -> startActivityForResult(new Intent(MainActivity.this, PurchaseActivity.class), PURCHASE_REQUEST), 200);
+                    new Handler().postDelayed(() -> startActivity(new Intent(MainActivity.this, PurchaseActivity.class)), 200);
                     break;
                 case R.id.action_scan:
                     new Handler().postDelayed(() -> {
@@ -193,13 +202,7 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
     }
 
     private void checkSetUpPro() {
-        if (App.isProVersion()) {
-            setUpPro();
-        }
-    }
-
-    private void setUpPro() {
-        navigationView.getMenu().removeGroup(R.id.navigation_drawer_menu_category_buy_pro);
+        navigationView.getMenu().setGroupVisible(R.id.navigation_drawer_menu_category_buy_pro, !App.isProVersion());
     }
 
     private void setUpDrawerLayout() {
@@ -277,7 +280,7 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
         boolean handled = false;
 
         if (intent.getAction() != null && intent.getAction().equals(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH)) {
-            final ArrayList<Song> songs = SearchQueryHelper.getSongs(this, intent.getExtras());
+            final List<Song> songs = SearchQueryHelper.getSongs(this, intent.getExtras());
             if (MusicPlayerRemote.getShuffleMode() == MusicService.SHUFFLE_MODE_SHUFFLE) {
                 MusicPlayerRemote.openAndShuffleQueue(songs, true);
             } else {
@@ -293,7 +296,7 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
             final int id = (int) parseIdFromIntent(intent, "playlistId", "playlist");
             if (id >= 0) {
                 int position = intent.getIntExtra("position", 0);
-                ArrayList<Song> songs = new ArrayList<>(PlaylistSongLoader.getPlaylistSongList(this, id));
+                List<Song> songs = new ArrayList<>(PlaylistSongLoader.getPlaylistSongList(this, id));
                 MusicPlayerRemote.openQueue(songs, position, true);
                 handled = true;
             }
